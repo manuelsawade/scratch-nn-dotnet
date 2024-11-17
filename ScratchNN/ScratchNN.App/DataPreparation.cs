@@ -1,16 +1,17 @@
 ﻿using Microsoft.Extensions.Configuration;
 using ScratchNN.App.DataTransformations;
-
-namespace ScratchNN.App;
+using System.IO.Compression;
 
 using LabeledData = (float[] InputData, float[] Expected);
+
+namespace ScratchNN.App;
 
 internal class DataPreparation
 {
     internal static (LabeledData[], LabeledData[]) Prepare(IConfigurationRoot config)
-    {
+    {        
         var trainingSamples = DataReader
-            .ReadFile(config["Paths:MnistTrainingDataPath"]!)
+            .ReadFile(config)
             .ToArray();
 
         var allLabels = trainingSamples.Select(data => data.Label).ToArray();
@@ -29,7 +30,7 @@ internal class DataPreparation
             .ToArray();
 
         var testSamples = DataReader
-            .ReadFile(config["Paths:MnistTestDataPath"]!)
+            .ReadFile(config)
             .ToArray();
 
         var testSampleLables = testSamples.Select(data => data.Label).ToArray();
