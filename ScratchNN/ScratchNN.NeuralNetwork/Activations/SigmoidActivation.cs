@@ -1,10 +1,10 @@
 ﻿namespace ScratchNN.NeuralNetwork.Activations;
 
-public class SigmoidActivation
+public static class SigmoidActivation
 {
     public static float[] Steepness(float[] input)
     {
-        return input.Select(SigmoidDerivate).ToArray();
+        return input.Select(SigmoidDerivative).ToArray();
     }
 
     public static float[] Function(float[] input)
@@ -22,8 +22,8 @@ public class SigmoidActivation
         return 1.0f / (1.0f + (float)Math.Exp(-input));
     }
 
-    private static float SigmoidDerivate(float input)
+    private static float SigmoidDerivative(float input)
     {
-        return 1.0f / (1.0f + (float)Math.Exp(-input));
+        return Sigmoid(input) * (1 - Sigmoid(input));
     }
 }

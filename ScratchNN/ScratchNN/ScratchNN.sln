@@ -1,0 +1,16 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ScratchNN.NeuralNetwork.Tests", "ScratchNN.NeuralNetwork.Tests\ScratchNN.NeuralNetwork.Tests.csproj", "{30F48D5E-4FB0-4CDA-9AD5-620E38C66DFC}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{30F48D5E-4FB0-4CDA-9AD5-620E38C66DFC}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{30F48D5E-4FB0-4CDA-9AD5-620E38C66DFC}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{30F48D5E-4FB0-4CDA-9AD5-620E38C66DFC}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{30F48D5E-4FB0-4CDA-9AD5-620E38C66DFC}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+EndGlobal

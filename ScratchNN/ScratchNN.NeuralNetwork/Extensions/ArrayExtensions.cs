@@ -114,7 +114,7 @@ internal static class ArrayExtensions
         return a;
     }
 
-    public static float[] Substract(this float[] a, float[] b)
+    public static float[] Subtract(this float[] a, float[] b)
     {
         for (var i = 0; i < a.Length; i++)
             a[i] = a[i] - b[i];
@@ -122,7 +122,7 @@ internal static class ArrayExtensions
         return a;
     }
 
-    public static float[][] Substract(this float[][] a, float[][] b)
+    public static float[][] Subtract(this float[][] a, float[][] b)
     {
         for (var i = 0; i < a.Length; i++)
             for (var j = 0; j < a[i].Length; j++)

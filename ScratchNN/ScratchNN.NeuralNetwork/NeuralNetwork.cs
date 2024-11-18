@@ -137,7 +137,7 @@ public class NeuralNetwork
         var (outputs, weightedSum) = FeedForward(inputData);
 
         var costs = outputs[^1]
-            .Substract(expected)
+            .Subtract(expected)
             .Multiply(ActivationSteepness(weightedSum[^1]));
 
         costsBias[^1] = costs;

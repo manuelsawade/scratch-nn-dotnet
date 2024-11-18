@@ -70,7 +70,8 @@ public class SimpleNeuralNetwork
     public void Fit(
         LabeledData[] trainingData,
         int epochs,
-        int batchSize)
+        int batchSize,
+        float learningRate)
     {
         var validationSetLength = (int)(trainingData.Length * 0.1);
         var validationData = trainingData
@@ -90,7 +91,7 @@ public class SimpleNeuralNetwork
             for (var iBatch = 0; iBatch < miniBatches.Length; iBatch++)
             {
                 Console.Write($"Epoch {epoch,2} | Fit Batches: {iBatch}/{miniBatches.Length}");
-                UpdateParameters(miniBatches[iBatch]);
+                UpdateParameters(miniBatches[iBatch], learningRate);
 
                 ConsoleExtensions.ClearCurrentLine();
             }
@@ -99,14 +100,14 @@ public class SimpleNeuralNetwork
         }
     }
 
-    public void UpdateParameters(LabeledData[] trainingBatch)
+    public void UpdateParameters(LabeledData[] trainingBatch, float learningRate)
     {
         var costSumBias = _biases[1..].Shape().New<float>();
         var costSumWeights = _weights[1..].Shape().New<float>();
 
-        foreach (var (InputData, Expected) in trainingBatch)
+        foreach (var (inputData, expected) in trainingBatch)
         {
-            var (costsBias, costsWeights) = Backpropagation(InputData, Expected);
+            var (costsBias, costsWeights) = Backpropagation(inputData, expected);
 
             costSumBias = costSumBias.Add(costsBias);
             costSumWeights = costSumWeights.Add(costsWeights);
@@ -115,11 +116,11 @@ public class SimpleNeuralNetwork
         IterateNetwork(
             biasAction: (iLayer, iNeuron, bias) =>
             {
-                _biases[iLayer][iNeuron] = bias - costSumBias[iLayer - 1][iNeuron];
+                _biases[iLayer][iNeuron] = bias - learningRate * costSumBias[iLayer - 1][iNeuron] / trainingBatch.Length;
             },
             weightAction: (iLayer, iNeuron, iWeight, weight) =>
             {
-                _weights[iLayer][iNeuron][iWeight] = weight - costSumWeights[iLayer - 1][iNeuron][iWeight];
+                _weights[iLayer][iNeuron][iWeight] = weight - learningRate * costSumWeights[iLayer - 1][iNeuron][iWeight] / trainingBatch.Length;
             });
     }
 
@@ -131,11 +132,11 @@ public class SimpleNeuralNetwork
         var (outputs, weightedSum) = FeedForward(inputData);
 
         var costs = outputs[^1]
-            .Substract(expected)
+            .Subtract(expected)
             .Multiply(ActivationSteepness(weightedSum[^1]));
 
         costsBias[^1] = costs;
-        costsWeights[^1] = costs.Multiply(weightedSum[^2].Transpose());
+        costsWeights[^1] = costs.Multiply(outputs[^2].Transpose());
 
         for (var iLayer = _layers.Length - 2; iLayer > 0; iLayer--)
         {
@@ -236,12 +237,7 @@ public class SimpleNeuralNetwork
             ? value / (float)Math.Sqrt(respectiveTo.Value)
             : value;
     }
-
-    private static float[] Activation(float[] weightedSums)
-    {
-        return SigmoidActivation.Function(weightedSums);
-    }
-
+    
     private static float Activation(float weightedSums)
     {
         return SigmoidActivation.Function(weightedSums);

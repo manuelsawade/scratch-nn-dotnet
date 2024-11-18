@@ -7,6 +7,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ScratchNN.App", "ScratchNN.
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ScratchNN.NeuralNetwork", "ScratchNN.NeuralNetwork\ScratchNN.NeuralNetwork.csproj", "{2EB59A6B-BEAA-4CC3-850C-D99483057EBC}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ScratchNN.NeuralNetwork.Tests", "ScratchNN.NeuralNetwork.Tests\ScratchNN.NeuralNetwork.Tests.csproj", "{934064B6-B384-4D50-8BEA-A4AD3CD21D8B}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -21,6 +23,10 @@ Global
 		{2EB59A6B-BEAA-4CC3-850C-D99483057EBC}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{2EB59A6B-BEAA-4CC3-850C-D99483057EBC}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{2EB59A6B-BEAA-4CC3-850C-D99483057EBC}.Release|Any CPU.Build.0 = Release|Any CPU
+		{934064B6-B384-4D50-8BEA-A4AD3CD21D8B}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{934064B6-B384-4D50-8BEA-A4AD3CD21D8B}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{934064B6-B384-4D50-8BEA-A4AD3CD21D8B}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{934064B6-B384-4D50-8BEA-A4AD3CD21D8B}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
