@@ -1,4 +1,4 @@
-﻿namespace ML.NeuralNetwork.Extensions;
+﻿namespace ScratchNN.NeuralNetwork.Extensions;
 
 internal class ConsoleExtensions
 {

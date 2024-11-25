@@ -1,18 +1,14 @@
-﻿using Microsoft.Extensions.Configuration;
-using System.IO.Compression;
+﻿using System.IO.Compression;
 
 namespace ScratchNN.App;
 
 internal class DataReader
 {
-    private const int _label = 1;
-    private const int _input = 784;
-
-    public static IEnumerable<(float Label, float[] Input)> ReadFile(IConfigurationRoot config)
+    public static IEnumerable<(float[] InputData, float Label)> ReadFile(string path, string file)
     {
-        using var archive = ZipFile.OpenRead(config["Paths:DataPath"]!);
-        using var trainingStream = archive.GetEntry(config["Paths:TrainingFile"]!)!.Open();
-        using var fileReader = new StreamReader(trainingStream);
+        using var archive = ZipFile.OpenRead(path!);
+        using var fileStream = archive.GetEntry(file!)!.Open();
+        using var fileReader = new StreamReader(fileStream);
 
         var lineArray = fileReader.ReadToEnd().Split(Environment.NewLine);
 
@@ -23,11 +19,12 @@ internal class DataReader
             
             var valuesPerLine = line
                 .Split(",")
-                .Select(float.Parse);
+                .Select(float.Parse)
+                .ToArray();
 
             yield return (
-                Label: valuesPerLine.First(),
-                Input: valuesPerLine.Skip(_label).Take(_input).ToArray()
+                InputData: valuesPerLine[1..],
+                Label: valuesPerLine[0]
                 );
         }
     }

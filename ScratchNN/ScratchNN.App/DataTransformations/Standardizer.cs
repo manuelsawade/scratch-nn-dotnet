@@ -17,10 +17,4 @@ public class Standardizer
                 .ToArray())
             .ToArray();
     }
-
-    private static float StandardDeviation(float[] allInputs)
-    {
-        var avg = allInputs.Average();
-        return (float)Math.Sqrt(allInputs.Average(input => Math.Pow(input - avg, 2)));
-    }
 }

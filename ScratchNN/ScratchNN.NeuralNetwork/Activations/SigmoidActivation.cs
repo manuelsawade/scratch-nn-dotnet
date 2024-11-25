@@ -1,29 +1,35 @@
-﻿namespace ScratchNN.NeuralNetwork.Activations;
+﻿using ScratchNN.NeuralNetwork.Extensions;
+using System.Numerics.Tensors;
 
-public static class SigmoidActivation
+namespace ScratchNN.NeuralNetwork.Activations;
+
+public class SigmoidActivation : IActivationFunction
 {
-    public static float[] Steepness(float[] input)
+    public float Activation(float input)
     {
-        return input.Select(SigmoidDerivative).ToArray();
+        float[] activated = [0f];
+        TensorPrimitives.Sigmoid([input], activated);
+
+        return activated[0];
     }
 
-    public static float[] Function(float[] input)
+    public float[] Activation(float[] input)
     {
-        return input.Select(Sigmoid).ToArray();
+        var activated = input.Length.New<float>();
+        TensorPrimitives.Sigmoid(input, activated);
+
+        return activated;
     }
 
-    public static float Function(float input)
+    public float Gradient(float input)
     {
-        return Sigmoid(input);
+        var activation = Activation(input);
+        return activation * (1 - activation);
     }
 
-    private static float Sigmoid(float input)
+    public float[] Gradient(float[] input)
     {
-        return 1.0f / (1.0f + (float)Math.Exp(-input));
-    }
-
-    private static float SigmoidDerivative(float input)
-    {
-        return Sigmoid(input) * (1 - Sigmoid(input));
+        ReadOnlySpan<float> activation = Activation(input);
+        return activation.Multiply(activation.OneSubtract()).ToArray();
     }
 }

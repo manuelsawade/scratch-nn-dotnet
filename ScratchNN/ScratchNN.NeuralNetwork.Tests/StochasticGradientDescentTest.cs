@@ -1,6 +1,5 @@
-using FluentAssertions;
-
-using LabeledData = (float[] InputData, float[] ExpectedData);
+using ScratchNN.NeuralNetwork.Activations;
+using ScratchNN.NeuralNetwork.CostFunctions;
 
 namespace ScratchNN.NeuralNetwork.Tests;
 
@@ -12,8 +11,6 @@ public class StochasticGradientDescentTest
     private float[][][] _weights;
 
     private LabeledData[] _data;
-    private float _learningRate;
-    private float[][] _expected;
 
     [SetUp]
     public void Setup()
@@ -47,55 +44,105 @@ public class StochasticGradientDescentTest
             ([2, 3, 4, 5], [1, 3, 4]),
             ([1, 8, 7, 6], [5, 7, 8]),
             ([1, 9, 3, 4], [2, 5, 9]),
-            ([1, 2, 3, 4], [5, 6, 9]),
-            ([2, 3, 4, 5], [1, 3, 4]),
-            ([1, 8, 7, 6], [5, 7, 8]),
-            ([1, 9, 3, 4], [2, 5, 9]),
-        ];
-
-        _learningRate = 0.5f;
-
-        _expected = [
-            [0.796827137f, 0.6727337f,   0.947449267f],
-            [0.80219835f,  0.669064045f, 0.952524841f],
-            [0.815240443f, 0.6279797f,   0.9648214f],
-            [0.8170456f,   0.6555715f,   0.967523634f],
-            [0.796827137f, 0.6727337f,   0.947449267f],
-            [0.80219835f,  0.669064045f, 0.952524841f],
-            [0.815240443f, 0.6279797f,   0.9648214f],
-            [0.8170456f,   0.6555715f,   0.967523634f],
         ];
     }
 
     [Test]
     public void SimpleNeuralNetwork_should_calculate_stochastic_gradient_descent()
     {
+        var learningRate = 0.5f;
+
+        float[][] expected = [
+            [0.796827137f, 0.6727337f,   0.947449267f],
+            [0.80219835f,  0.669064045f, 0.952524841f],
+            [0.815240443f, 0.6279797f,   0.9648214f],
+            [0.8170456f,   0.6555715f,   0.967523634f],
+        ];
+
         var sut = new SimpleNeuralNetwork(
             _networkLayer,
             _biases,
             _weights);
 
-        sut.UpdateParameters(_data, _learningRate);
+        sut.UpdateParameters(_data, learningRate);
 
         var yPredicted0 = sut.Predict(_data[0].InputData);
         var yPredicted1 = sut.Predict(_data[1].InputData);
         var yPredicted2 = sut.Predict(_data[2].InputData);
         var yPredicted3 = sut.Predict(_data[3].InputData);
-        var yPredicted4 = sut.Predict(_data[4].InputData);
-        var yPredicted5 = sut.Predict(_data[5].InputData);
-        var yPredicted6 = sut.Predict(_data[6].InputData);
-        var yPredicted7 = sut.Predict(_data[7].InputData);
 
-        Assert_Predictions(yPredicted0, _expected[0]);
-        Assert_Predictions(yPredicted1, _expected[1]);
-        Assert_Predictions(yPredicted2, _expected[2]);
-        Assert_Predictions(yPredicted3, _expected[3]);
-        Assert_Predictions(yPredicted4, _expected[4]);
-        Assert_Predictions(yPredicted5, _expected[5]);
-        Assert_Predictions(yPredicted6, _expected[6]);
-        Assert_Predictions(yPredicted7, _expected[7]);
+        Assert_Predictions(yPredicted0, expected[0]);
+        Assert_Predictions(yPredicted1, expected[1]);
+        Assert_Predictions(yPredicted2, expected[2]);
+        Assert_Predictions(yPredicted3, expected[3]);
     }
-    
+
+    [Test]
+    public void NeuralNetwork_should_calculate_stochastic_gradient_descent()
+    {
+        var learningRate = 0.001f;
+        var regularization = 10f;
+
+        float[][] expected = [
+            [0.6153524f, 0.324842423f,   0.615812063f],
+            [0.618661463f, 0.316758156f, 0.621615231f],
+            [0.6212902f, 0.274484873f,   0.6608932f],
+            [0.6167298f, 0.283292651f,   0.665169656f],
+        ];
+
+        var sut = new NeuralNetwork(
+            _networkLayer,
+            _biases,
+            _weights,
+            new CrossEntropyCost(),
+            new SigmoidActivation());
+
+        sut.UpdateParameters(_data, learningRate, regularization);
+
+        var yPredicted0 = sut.Predict(_data[0].InputData);
+        var yPredicted1 = sut.Predict(_data[1].InputData);
+        var yPredicted2 = sut.Predict(_data[2].InputData);
+        var yPredicted3 = sut.Predict(_data[3].InputData);
+
+        Assert_Predictions(yPredicted0, expected[0]);
+        Assert_Predictions(yPredicted1, expected[1]);
+        Assert_Predictions(yPredicted2, expected[2]);
+        Assert_Predictions(yPredicted3, expected[3]);
+    }
+
+    [Test]
+    public void AcceleratedNeuralNetwork_should_calculate_stochastic_gradient_descent()
+    {
+        var learningRate = 0.001f;
+        var regularization = 10f;
+
+        float[][] expected = [
+            [0.6153524f, 0.324842423f,   0.615812063f],
+            [0.618661463f, 0.316758156f, 0.621615231f],
+            [0.6212902f, 0.274484873f,   0.6608932f],
+            [0.6167298f, 0.283292651f,   0.665169656f],
+        ];
+
+        var sut = new AcceleratedNeuralNetwork(
+            _networkLayer,
+            _biases,
+            _weights,
+            new CrossEntropyCost(),
+            new SigmoidActivation());
+
+        sut.UpdateParameters(_data, learningRate, regularization);
+
+        var yPredicted0 = sut.Predict(_data[0].InputData);
+        var yPredicted1 = sut.Predict(_data[1].InputData);
+        var yPredicted2 = sut.Predict(_data[2].InputData);
+        var yPredicted3 = sut.Predict(_data[3].InputData);
+
+        Assert_Predictions(yPredicted0, expected[0]);
+        Assert_Predictions(yPredicted1, expected[1]);
+        Assert_Predictions(yPredicted2, expected[2]);
+        Assert_Predictions(yPredicted3, expected[3]);
+    }
+
     private static void Assert_Predictions(float[] predictedValues, float[] expectedValues)
     {
         foreach (var (predicted, expected) in predictedValues.Zip(expectedValues))

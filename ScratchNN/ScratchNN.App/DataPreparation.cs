@@ -1,21 +1,33 @@
 ﻿using Microsoft.Extensions.Configuration;
 using ScratchNN.App.DataTransformations;
-using System.IO.Compression;
 
 using LabeledData = (float[] InputData, float[] Expected);
+using SampleData = (float[] InputData, float Label);
 
 namespace ScratchNN.App;
 
 internal class DataPreparation
 {
     internal static (LabeledData[], LabeledData[]) Prepare(IConfigurationRoot config)
-    {        
+    {
         var trainingSamples = DataReader
-            .ReadFile(config)
+            .ReadFile(config["Paths:DataPath"]!, config["Paths:TrainingFile"]!)
             .ToArray();
 
-        var allLabels = trainingSamples.Select(data => data.Label).ToArray();
-        var allFeatures = trainingSamples.Select(data => data.Input).ToArray();
+        var testSamples = DataReader
+            .ReadFile(config["Paths:DataPath"]!, config["Paths:TestFile"]!)
+            .ToArray();
+
+        var trainingData = PrepareData(trainingSamples);
+        var testData = PrepareData(testSamples);
+
+        return (trainingData, testData);
+    }
+
+    private static LabeledData[] PrepareData(SampleData[] samples)
+    {
+        var allLabels = samples.Select(data => data.Label).ToArray();
+        var allFeatures = samples.Select(data => data.InputData).ToArray();
 
         var encodedLabels = OneHotEncoding.Transform(allLabels);
         var standardizedFeatures = Standardizer.Transform(allFeatures);
@@ -25,28 +37,10 @@ internal class DataPreparation
             .Select((sample) => new LabeledData
             {
                 Expected = sample.First,
-                InputData = sample.Second,               
-            })
-            .ToArray();
-
-        var testSamples = DataReader
-            .ReadFile(config)
-            .ToArray();
-
-        var testSampleLables = testSamples.Select(data => data.Label).ToArray();
-        var testFeatures = trainingSamples.Select(data => data.Input).ToArray();
-
-        var encodedTestLabels = OneHotEncoding.Transform(testSampleLables);
-
-        var testData = Enumerable
-            .Zip(encodedTestLabels, testFeatures)
-            .Select(sample => new LabeledData
-            {
-                Expected = sample.First,
                 InputData = sample.Second,
             })
             .ToArray();
 
-        return (trainingData, testData);
+        return trainingData;
     }
 }

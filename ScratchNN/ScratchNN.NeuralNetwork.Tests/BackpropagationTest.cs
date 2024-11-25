@@ -1,5 +1,5 @@
-using FluentAssertions;
-using ScratchNN.NeuralNetwork;
+using ScratchNN.NeuralNetwork.Activations;
+using ScratchNN.NeuralNetwork.CostFunctions;
 
 namespace ScratchNN.NeuralNetwork.Tests;
 
@@ -13,9 +13,6 @@ public class BackpropagationTest
     private float[][] _biases;
     private float[][][] _weights;
 
-    private float[][] _expectedBiases;
-    private float[][][] _expectedWeights;
-   
     [SetUp]
     public void Setup()
     {
@@ -47,15 +44,21 @@ public class BackpropagationTest
                 [0.0046f, -0.235f, -0.00015f, 0.125f, 0.345f]
             ]
         ];
+    }
 
-        _expectedBiases =
+    [Test]
+    public void SimpleNeuralNetwork_should_calculate_backpropagation()
+    {
+        float[][] _expectedBiases =
         [
+            [],
             [-0.0197303779f, 0.0252755173f, -0.0045234235f, 0.04611452f, -0.0347640328f],
             [-1.05086958f, -1.23805928f, -1.94199872f]
         ];
 
-        _expectedWeights =
+        float[][][] _expectedWeights =
         [
+            [],
             [
                 [-0.138112649f, -0.098651886f, -0.0591911338f, -0.07892151f],
                 [0.176928625f, 0.126377583f, 0.0758265555f, 0.101102069f],
@@ -69,11 +72,7 @@ public class BackpropagationTest
                 [-1.66595626f, -0.265300155f, -1.75015008f, -1.65935564f, -0.673500657f]
             ]
         ];
-    }
 
-    [Test]
-    public void SimpleNeuralNetwork_should_calculate_backpropagation()
-    {
         var sut = new SimpleNeuralNetwork(
             _networkLayer,
             _biases,
@@ -92,25 +91,108 @@ public class BackpropagationTest
             _expectedWeights);
     }
 
+    [Test]
+    public void NeuralNetwork_should_calculate_backpropagation()
+    {
+        float[][] _expectedBiases =
+        [
+            [],
+            [-0.09138872f, 0.10804186f, -0.00664345548f, 0.220214188f, -0.107757196f],
+            [-4.39549541f, -5.678851f, -8.366291f]
+        ];
+
+        float[][][] _expectedWeights =
+        [
+            [],
+            [
+                [-0.639721036f, -0.456943572f, -0.274166167f, -0.365554869f],
+                [0.756293f, 0.5402093f, 0.3241256f, 0.432167441f],
+                [-0.04650419f, -0.0332172774f, -0.0199303664f, -0.0265738219f],
+                [1.54149938f, 1.10107088f, 0.660642564f, 0.880856752f],
+                [-0.754300356f, -0.538786f, -0.323271573f, -0.431028783f]
+            ],
+            [
+                [-7.90134144f, 8.104064f, -9.71734f, -7.780026f, 2.7827878f],
+                [-10.2083015f, 10.4702129f, -12.55452f, -10.0515652f, 3.59528017f],
+                [-15.0392427f, 15.4250994f, -18.4957771f, -14.8083334f, 5.296698f]
+            ]
+        ];
+
+        var sut = new NeuralNetwork(
+            _networkLayer,
+            _biases,
+            _weights,
+             new CrossEntropyCost(),
+            new SigmoidActivation());
+
+        var (gradientBiases, gradientWeights) = sut.Backpropagation(
+            _input,
+            _label);
+
+        AssertBiases(
+            gradientBiases,
+            _expectedBiases);
+
+        AssertWeights(
+            gradientWeights,
+            _expectedWeights);
+    }
+
+    [Test]
+    public void AcceleratedNeuralNetwork_should_calculate_backpropagation()
+    {
+        float[][] _expectedBiases =
+        [
+            [],
+            [-0.09138872f, 0.10804186f, -0.00664345548f, 0.220214188f, -0.107757196f],
+            [-4.39549541f, -5.678851f, -8.366291f]
+        ];
+
+        float[][][] _expectedWeights =
+        [
+            [],
+            [
+                [-0.639721036f, -0.456943572f, -0.274166167f, -0.365554869f],
+                [0.756293f, 0.5402093f, 0.3241256f, 0.432167441f],
+                [-0.04650419f, -0.0332172774f, -0.0199303664f, -0.0265738219f],
+                [1.54149938f, 1.10107088f, 0.660642564f, 0.880856752f],
+                [-0.754300356f, -0.538786f, -0.323271573f, -0.431028783f]
+            ],
+            [
+                [-7.90134144f, 8.104064f, -9.71734f, -7.780026f, 2.7827878f],
+                [-10.2083015f, 10.4702129f, -12.55452f, -10.0515652f, 3.59528017f],
+                [-15.0392427f, 15.4250994f, -18.4957771f, -14.8083334f, 5.296698f]
+            ]
+        ];
+
+        var sut = new AcceleratedNeuralNetwork(
+            _networkLayer,
+            _biases,
+            _weights,
+             new CrossEntropyCost(),
+            new SigmoidActivation());
+
+        var (gradientBiases, gradientWeights) = sut.Backpropagation(
+            _input,
+            _label);
+
+        AssertBiases(
+            gradientBiases,
+            _expectedBiases);
+
+        AssertWeights(
+            gradientWeights,
+            _expectedWeights);
+    }
+
     private static void AssertBiases<TType>(
-        TType[][] calculatedLayers, 
+        TType[][] calculatedLayers,
         TType[][] expectedLayers)
     {
         foreach (var (calculatedNeurons, expectedNeurons) in calculatedLayers.Zip(expectedLayers))
             foreach (var (calculatedBias, expectedBias) in calculatedNeurons.Zip(expectedNeurons))
             {
                 calculatedBias.Should().Be(expectedBias);
-            }
-    }
-
-    private static void AssertApproximationBiases(
-        float[][] calculatedLayers,
-        float[][] expectedLayers)
-    {
-        foreach (var (calculatedNeurons, expectedNeurons) in calculatedLayers.Zip(expectedLayers))
-            foreach (var (calculatedBias, expectedBias) in calculatedNeurons.Zip(expectedNeurons))
-            {
-                calculatedBias.Should().BeApproximately(expectedBias, 0.0000001f);
             }
     }
 
@@ -123,18 +205,6 @@ public class BackpropagationTest
                 foreach (var (calculatedWeight, expectedWeight) in calculatedWeights.Zip(expectedWeights))
                 {
                     calculatedWeight.Should().Be(expectedWeight);
-                }
-    }
-
-    private static void AssertApproximationWeights(
-        float[][][] calculatedLayers,
-        float[][][] expectedLayers)
-    {
-        foreach (var (calculatedNeurons, expectedNeurons) in calculatedLayers.Zip(expectedLayers))
-            foreach (var (calculatedWeights, expectedWeights) in calculatedNeurons.Zip(expectedNeurons))
-                foreach (var (calculatedWeight, expectedWeight) in calculatedWeights.Zip(expectedWeights))
-                {
-                    calculatedWeight.Should().BeApproximately(expectedWeight, 0.0000001f);
                 }
     }
 }
