@@ -8,11 +8,11 @@ internal class DataPreparation
     internal static (LabeledData[], LabeledData[]) Prepare(IConfigurationRoot config)
     {
         var trainingSamples = DataReader
-            .ReadFile(config["Paths:DataPath"]!, config["Paths:TrainingFile"]!)
+            .ReadFile(config["Paths:DataSet"]!, config["Files:Training"]!)
             .ToArray();
 
         var testSamples = DataReader
-            .ReadFile(config["Paths:DataPath"]!, config["Paths:TestFile"]!)
+            .ReadFile(config["Paths:DataSet"]!, config["Files:Test"]!)
             .ToArray();
 
         var trainingData = PrepareData(trainingSamples);
