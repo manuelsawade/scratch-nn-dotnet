@@ -1,5 +1,8 @@
-﻿using ScratchNN.NeuralNetwork.Extensions;
-using System.Numerics.Tensors;
+﻿using ScratchNN.NeuralNetwork.CostFunctions;
+using ScratchNN.NeuralNetwork.Extensions;
+using ScratchNN.NeuralNetwork.Initializers.Biases;
+using ScratchNN.NeuralNetwork.Initializers.Weights;
+using System.Diagnostics;
 
 namespace ScratchNN.NeuralNetwork.Implementations;
 
@@ -17,8 +20,8 @@ public class SimpleNeuralNetwork : NeuralNetworkBase
         (_random, Seed) = InitRandom(seed);
 
         Layers = layers;
-        Biases = InitBiases(layers, _random);
-        Weights = InitWeights(layers, _random);
+        Biases = InitBiases(layers, _random, new RandomInitializer());
+        Weights = InitWeights(layers, _random, new XavierInitializer());
     }
 
     public SimpleNeuralNetwork(
@@ -34,7 +37,7 @@ public class SimpleNeuralNetwork : NeuralNetworkBase
         Weights = weights;
     }
 
-    public float[] Predict(float[] inputData) => FeedForward(inputData).Outputs[^1];
+    public override float[] Predict(float[] inputData) => FeedForward(inputData).Outputs[^1];
 
 
     public (float[][] Outputs, float[][] WeightedSums) FeedForward(float[] inputData)
@@ -89,6 +92,9 @@ public class SimpleNeuralNetwork : NeuralNetworkBase
                 .Chunk(batchSize)
                 .ToArray();
 
+            var stopwatch = new Stopwatch();
+            stopwatch.Start();
+
             for (var iBatch = 0; iBatch < miniBatches.Length; iBatch++)
             {
                 Console.Write($"Epoch {epoch,2} | Fit Batches: {iBatch}/{miniBatches.Length}");
@@ -97,7 +103,10 @@ public class SimpleNeuralNetwork : NeuralNetworkBase
                 ConsoleExtensions.ClearCurrentLine();
             }
 
-            Evaluate(validationData);
+            stopwatch.Stop();
+            var (accuracy, cost) = Evaluate(new QuadraticCost(), validationData, 1);
+
+            Console.WriteLine($"Accuracy: {accuracy,-4} | Cost: {cost,-6} | Elapsed: {stopwatch.Elapsed}");
         }
     }
 
@@ -150,36 +159,6 @@ public class SimpleNeuralNetwork : NeuralNetworkBase
         };
 
         return (costsBias, costsWeights);
-    }
-
-    public void Evaluate(LabeledData[] labeledTestData)
-    {
-        var correctPredictions = 0;
-        var costs = new float[labeledTestData.Length];
-
-        Parallel.For(0, labeledTestData.Length, new() { MaxDegreeOfParallelism = 1 }, (iData) =>
-        {
-            var (InputData, Expected) = labeledTestData[iData];
-            var expectedLabel = Array.FindIndex(Expected, label => label == 1);
-            var predicted = Predict(InputData);
-
-            var delta = new float[predicted.Length];
-            TensorPrimitives.Subtract(Expected, predicted, delta);
-
-            costs[iData] = (float)(0.5 * Math.Pow((double)TensorPrimitives.Norm(delta), 2.0)) / labeledTestData.Length;
-
-            if (predicted[expectedLabel] == predicted.Max())
-            {
-                Interlocked.Increment(ref correctPredictions);
-            }
-        });
-
-        var accuracy = (float)Math.Round(correctPredictions / (double)labeledTestData.Length, 2);
-
-        var normedWeights = Weights[1..].SelectMany(neuron => neuron.Select(weights => TensorPrimitives.Norm(weights))).Sum();
-        var completeCost = 0.5f * (1 / labeledTestData.Length) * normedWeights + costs.Sum();
-
-        Console.WriteLine($"{labeledTestData.Length,5}/{correctPredictions} = Accuracy: {accuracy,-4} | Cost: {completeCost}");
     }
 
     private static float Activation(float weightedSums)

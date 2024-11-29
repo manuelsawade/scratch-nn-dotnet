@@ -2,8 +2,8 @@
 
 public interface IActivationFunction
 {
-    public float Activation(float weightedSums);
-    public float[] Activation(float[] weightedSums);
+    public float Compute(float weightedSums);
+    public float[] Compute(float[] weightedSums);
     public float Gradient(float weightedSums);
     public float[] Gradient(float[] weightedSums);
 }

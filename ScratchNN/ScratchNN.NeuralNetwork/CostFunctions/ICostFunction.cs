@@ -2,7 +2,7 @@
 
 public interface ICostFunction
 {
-    float[] Cost(float[] output, float[] expected, float[] weightedSum);
+    float[] Gradient(float[] output, float[] expected, float[] weightedSum);
 
-    float Computation(float[] output, float[] expected);
+    float Compute(float[] output, float[] expected);
 }

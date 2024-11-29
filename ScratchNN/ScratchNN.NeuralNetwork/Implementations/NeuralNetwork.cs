@@ -1,6 +1,7 @@
 ﻿using ScratchNN.NeuralNetwork.Activations;
 using ScratchNN.NeuralNetwork.CostFunctions;
 using ScratchNN.NeuralNetwork.Extensions;
+using ScratchNN.NeuralNetwork.Initializers;
 using System.Diagnostics;
 using System.Numerics.Tensors;
 
@@ -9,8 +10,8 @@ namespace ScratchNN.NeuralNetwork.Implementations;
 public class NeuralNetwork : NeuralNetworkBase
 {
     private readonly Random _random = new();
-    private readonly ICostFunction _costFunction;
-    private readonly IActivationFunction _activationFunction;
+    private readonly ICostFunction _cost;
+    private readonly IActivationFunction _activation;
 
     public override int Seed { get; init; }
     public override int[] Layers { get; init; }
@@ -19,31 +20,29 @@ public class NeuralNetwork : NeuralNetworkBase
 
     public NeuralNetwork(
         int[] layers,
-        ICostFunction costFunction,
-        IActivationFunction activationFunction,
+        IBiasInitializer biasInitializer,
+        IWeightInitializer weightInitializer,
+        ICostFunction cost,
+        IActivationFunction activation,
         int? seed = null)
     {
-        _costFunction = costFunction;
-        _activationFunction = activationFunction;
-
+        (_cost, _activation) = (cost, activation);
         (_random, Seed) = InitRandom(seed);
 
         Layers = layers;
-        Biases = InitBiases(layers, _random);
-        Weights = InitWeights(layers, _random);
+        Biases = InitBiases(layers, _random, biasInitializer);
+        Weights = InitWeights(layers, _random, weightInitializer);
     }
 
     public NeuralNetwork(
         int[] layers,
         float[][] biases,
         float[][][] weights,
-        ICostFunction costFunction,
-        IActivationFunction activationFunction,
+        ICostFunction cost,
+        IActivationFunction activation,
         int? seed = null)
     {
-        _costFunction = costFunction;
-        _activationFunction = activationFunction;
-
+        (_cost, _activation) = (cost, activation);
         (_random, Seed) = InitRandom(seed);
 
         Layers = layers;
@@ -51,7 +50,15 @@ public class NeuralNetwork : NeuralNetworkBase
         Weights = weights;
     }
 
-    public float[] Predict(float[] inputData) => FeedForward(inputData).Outputs[^1];
+    public override float[] Predict(float[] inputData)
+    {
+        var output = FeedForward(inputData).Outputs[^1];
+
+        if (_cost is CrossEntropyCost)
+            TensorPrimitives.SoftMax(output, output);
+
+        return output;
+    }
 
 
     public (float[][] Outputs, float[][] WeightedSums) FeedForward(float[] inputData)
@@ -77,7 +84,7 @@ public class NeuralNetwork : NeuralNetworkBase
 
                 var weightedSum = weightedInput + bias;
 
-                outputs[iLayer][iNeuron] = _activationFunction.Activation(weightedSum);
+                outputs[iLayer][iNeuron] = _activation.Compute(weightedSum);
                 weightedSums[iLayer][iNeuron] = weightedSum;
             }
         }
@@ -118,10 +125,8 @@ public class NeuralNetwork : NeuralNetworkBase
                 ConsoleExtensions.ClearCurrentLine();
             }
 
-            Evaluate(validationData, regularization);
-
             stopwatch.Stop();
-            var (accuracy, cost) = Evaluate(validationData, regularization);
+            var (accuracy, cost) = Evaluate(_cost, validationData, regularization);
 
             Console.WriteLine($"Accuracy: {accuracy,-4} | Cost: {cost,-6} | Elapsed: {stopwatch.Elapsed}");
         }
@@ -161,7 +166,7 @@ public class NeuralNetwork : NeuralNetworkBase
 
         var (outputs, weightedSum) = FeedForward(inputData);
 
-        var costs = _costFunction.Cost(outputs[^1], expected, _activationFunction.Gradient(weightedSum[^1]));
+        var costs = _cost.Gradient(outputs[^1], expected, _activation.Gradient(weightedSum[^1]));
 
         costsBias[^1] = costs;
         costsWeights[^1] = costs.Multiply(weightedSum[^2].Transpose());
@@ -171,37 +176,12 @@ public class NeuralNetwork : NeuralNetworkBase
             costs = Weights[iLayer + 1]
                 .Transpose()
                 .Multiply(costs)
-                .Multiply(_activationFunction.Gradient(weightedSum[iLayer]));
+                .Multiply(_activation.Gradient(weightedSum[iLayer]));
 
             costsBias[iLayer] = costs;
             costsWeights[iLayer] = costs.Multiply(outputs[iLayer - 1].Transpose());
         };
 
         return (costsBias, costsWeights);
-    }
-
-    public (float, float) Evaluate(LabeledData[] labeledTestData, float regularization)
-    {
-        var correctPredictions = 0;
-        var costs = new float[labeledTestData.Length];
-
-        Parallel.For(0, labeledTestData.Length, new() { MaxDegreeOfParallelism = 1 }, (iData) =>
-        {
-            var (inputData, expected) = labeledTestData[iData];
-            var output = Predict(inputData);
-
-            if (TensorPrimitives.IndexOfMax(output) == TensorPrimitives.IndexOfMax(expected)) //output[TensorPrimitives.IndexOfMax(expected)] == TensorPrimitives.Max(output))
-            {
-                Interlocked.Increment(ref correctPredictions);
-            }
-
-            costs[iData] = _costFunction.Computation(output, expected);
-        });
-
-        var accuracy = (float)Math.Round(correctPredictions / (double)labeledTestData.Length, 2);
-
-        var completeCost = 0.5f * (regularization / labeledTestData.Length) * Weights[1..].Norm() + costs.Sum();
-
-        return (accuracy, completeCost);
     }
 }

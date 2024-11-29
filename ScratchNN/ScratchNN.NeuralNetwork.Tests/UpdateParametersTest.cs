@@ -1,9 +1,10 @@
 using ScratchNN.NeuralNetwork.Activations;
 using ScratchNN.NeuralNetwork.CostFunctions;
+using ScratchNN.NeuralNetwork.Implementations;
 
 namespace ScratchNN.NeuralNetwork.Tests;
 
-public class StochasticGradientDescentTest
+public class UpdateParametersTest
 {
     private int[] _networkLayer;
 
@@ -84,13 +85,13 @@ public class StochasticGradientDescentTest
         var regularization = 10f;
 
         float[][] expected = [
-            [0.6153524f, 0.324842423f,   0.615812063f],
-            [0.618661463f, 0.316758156f, 0.621615231f],
-            [0.6212902f, 0.274484873f,   0.6608932f],
-            [0.6167298f, 0.283292651f,   0.665169656f],
+            [0.363855749f, 0.2721212f, 0.36402303f],
+            [0.3646484f, 0.2696245f, 0.36572707f],
+            [0.36398837f, 0.257319f, 0.378692657f],
+            [0.361521244f, 0.2590144f, 0.379464328f],
         ];
 
-        var sut = new NeuralNetwork(
+        var sut = new Implementations.NeuralNetwork(
             _networkLayer,
             _biases,
             _weights,
@@ -117,10 +118,10 @@ public class StochasticGradientDescentTest
         var regularization = 10f;
 
         float[][] expected = [
-            [0.6153524f, 0.324842423f,   0.615812063f],
-            [0.618661463f, 0.316758156f, 0.621615231f],
-            [0.6212902f, 0.274484873f,   0.6608932f],
-            [0.6167298f, 0.283292651f,   0.665169656f],
+            [0.380954534f, 0.2852439f,   0.3338016f],
+            [0.381527215f, 0.282682121f, 0.335790664f],
+            [0.3812049f, 0.270634174f,   0.348160952f],
+            [0.379607379f, 0.271589041f,   0.34880358f],
         ];
 
         var sut = new AcceleratedNeuralNetwork(

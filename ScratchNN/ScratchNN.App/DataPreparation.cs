@@ -1,9 +1,6 @@
 ﻿using Microsoft.Extensions.Configuration;
 using ScratchNN.App.DataTransformations;
 
-using LabeledData = (float[] InputData, float[] Expected);
-using SampleData = (float[] InputData, float Label);
-
 namespace ScratchNN.App;
 
 internal class DataPreparation
@@ -36,7 +33,7 @@ internal class DataPreparation
             .Zip(encodedLabels, standardizedFeatures)
             .Select((sample) => new LabeledData
             {
-                Expected = sample.First,
+                ExpectedData = sample.First,
                 InputData = sample.Second,
             })
             .ToArray();

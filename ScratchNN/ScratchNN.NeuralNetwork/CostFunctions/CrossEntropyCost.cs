@@ -1,11 +1,10 @@
 ﻿using ScratchNN.NeuralNetwork.Extensions;
-using System.Diagnostics.CodeAnalysis;
 
 namespace ScratchNN.NeuralNetwork.CostFunctions;
 
 public class CrossEntropyCost : ICostFunction
 {
-    public float Computation(float[] output, float[] expected)
+    public float Compute(float[] output, float[] expected)
     {
         ReadOnlySpan<float> expectedSpan = expected;
         ReadOnlySpan<float> outputSpan = output;
@@ -25,7 +24,7 @@ public class CrossEntropyCost : ICostFunction
     };
 
 
-    public float[] Cost(float[] output, float[] expected, float[] weightedSum)
+    public float[] Gradient(float[] output, float[] expected, float[] _)
     {
         return output.Subtract(expected);
     }

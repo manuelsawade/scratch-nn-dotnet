@@ -5,7 +5,7 @@ namespace ScratchNN.NeuralNetwork.Activations;
 
 public class SigmoidActivation : IActivationFunction
 {
-    public float Activation(float input)
+    public float Compute(float input)
     {
         float[] activated = [0f];
         TensorPrimitives.Sigmoid([input], activated);
@@ -13,7 +13,7 @@ public class SigmoidActivation : IActivationFunction
         return activated[0];
     }
 
-    public float[] Activation(float[] input)
+    public float[] Compute(float[] input)
     {
         var activated = input.Length.New<float>();
         TensorPrimitives.Sigmoid(input, activated);
@@ -23,13 +23,13 @@ public class SigmoidActivation : IActivationFunction
 
     public float Gradient(float input)
     {
-        var activation = Activation(input);
+        var activation = Compute(input);
         return activation * (1 - activation);
     }
 
     public float[] Gradient(float[] input)
     {
-        ReadOnlySpan<float> activation = Activation(input);
+        ReadOnlySpan<float> activation = Compute(input);
         return activation.Multiply(activation.OneSubtract()).ToArray();
     }
 }

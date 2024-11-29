@@ -1,29 +1,29 @@
 ﻿namespace ScratchNN.NeuralNetwork.Activations;
 
-public class RectifiedLinearUnitActivation
+public class RectifiedLinearUnitActivation : IActivationFunction
 {
-    public static float[] Function(float[] input)
+    public float[] Compute(float[] input)
     {
         for (var i = 0; i < input.Length; i++)
-            input[i] = Function(input[i]);
+            input[i] = Compute(input[i]);
 
         return input;
     }
 
-    public static float Function(float input)
+    public float Compute(float input)
     {
         return (input < 0) ? 0 : input;
     }
 
-    public static float[] Derivate(float[] input)
+    public float[] Gradient(float[] input)
     {
         for (var i = 0; i < input.Length; i++)
-            input[i] = Derivate(input[i]);
+            input[i] = Gradient(input[i]);
 
         return input;
     }
 
-    public static float Derivate(float input)
+    public float Gradient(float input)
     {
         return input >= 0 ? 1 : 0;
     }

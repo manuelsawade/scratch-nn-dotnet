@@ -1,5 +1,7 @@
+using FluentAssertions;
 using ScratchNN.NeuralNetwork.Activations;
 using ScratchNN.NeuralNetwork.CostFunctions;
+using ScratchNN.NeuralNetwork.Implementations;
 
 namespace ScratchNN.NeuralNetwork.Tests;
 
@@ -118,7 +120,7 @@ public class BackpropagationTest
             ]
         ];
 
-        var sut = new NeuralNetwork(
+        var sut = new Implementations.NeuralNetwork(
             _networkLayer,
             _biases,
             _weights,
@@ -176,11 +178,11 @@ public class BackpropagationTest
             _input,
             _label);
 
-        AssertBiases(
+        AssertBiasesApproximately(
             gradientBiases,
             _expectedBiases);
 
-        AssertWeights(
+        AssertWeightsApproximately(
             gradientWeights,
             _expectedWeights);
     }
@@ -196,6 +198,17 @@ public class BackpropagationTest
             }
     }
 
+    private static void AssertBiasesApproximately(
+        float[][] calculatedLayers,
+        float[][] expectedLayers)
+    {
+        foreach (var (calculatedNeurons, expectedNeurons) in calculatedLayers.Zip(expectedLayers))
+            foreach (var (calculatedBias, expectedBias) in calculatedNeurons.Zip(expectedNeurons))
+            {
+                calculatedBias.Should().BeApproximately(expectedBias, 0.0000001f);
+            }
+    }
+
     private static void AssertWeights<T>(
         T[][][] calculatedLayers,
         T[][][] expectedLayers)
@@ -205,6 +218,18 @@ public class BackpropagationTest
                 foreach (var (calculatedWeight, expectedWeight) in calculatedWeights.Zip(expectedWeights))
                 {
                     calculatedWeight.Should().Be(expectedWeight);
+                }
+    }
+
+    private static void AssertWeightsApproximately(
+       float[][][] calculatedLayers,
+       float[][][] expectedLayers)
+    {
+        foreach (var (calculatedNeurons, expectedNeurons) in calculatedLayers.Zip(expectedLayers))
+            foreach (var (calculatedWeights, expectedWeights) in calculatedNeurons.Zip(expectedNeurons))
+                foreach (var (calculatedWeight, expectedWeight) in calculatedWeights.Zip(expectedWeights))
+                {
+                   calculatedWeight.Should().BeApproximately(expectedWeight, 0.000001f);
                 }
     }
 }

@@ -1,16 +1,77 @@
-﻿using ScratchNN.NeuralNetwork.Extensions;
+﻿using ScratchNN.NeuralNetwork.CostFunctions;
+using ScratchNN.NeuralNetwork.Extensions;
+using ScratchNN.NeuralNetwork.Initializers;
+using System.Numerics.Tensors;
 
 namespace ScratchNN.NeuralNetwork;
 
 public abstract class NeuralNetworkBase
 {
-    public virtual int Seed { get; init; }
+    public abstract int Seed { get; init; }
 
-    public virtual int[] Layers { get; init; } = [];
+    public abstract int[] Layers { get; init; }
 
-    public virtual float[][] Biases { get; init; } = [];
+    public abstract float[][] Biases { get; init; }
 
-    public virtual float[][][] Weights { get; init; } = [];
+    public abstract float[][][] Weights { get; init; }
+
+    public abstract float[] Predict(float[] inputData);
+
+    public (float Accuracy, float Cost) Evaluate(
+        ICostFunction costFunction, 
+        LabeledData[] labeledTestData, 
+        float regularization)
+    {
+        var correctPredictions = 0;
+        var costs = new float[labeledTestData.Length];
+
+        Parallel.For(
+            0, 
+            labeledTestData.Length, 
+            new() { MaxDegreeOfParallelism = 10 }, 
+            (iData) =>
+            {
+                var (inputData, expected) = labeledTestData[iData];
+                var output = Predict(inputData);
+
+                if (TensorPrimitives.IndexOfMax(output) == TensorPrimitives.IndexOfMax(expected))
+                {
+                    Interlocked.Increment(ref correctPredictions);
+                }
+
+                costs[iData] = costFunction.Compute(output, expected) / labeledTestData.Length;
+            });
+
+        var accuracy = (float)Math.Round(correctPredictions / (double)labeledTestData.Length, 2);
+        var completeCost = MathF.Round(0.5f * (regularization / labeledTestData.Length) * Weights[1..].Norm() + costs.Sum(), 4);
+
+        return (accuracy, completeCost);
+    }
+
+    public float EvaluateAccuracy(
+        LabeledData[] labeledTestData)
+    {
+        var correctPredictions = 0;
+        var costs = new float[labeledTestData.Length];
+
+        Parallel.For(
+            0,
+            labeledTestData.Length,
+            new() { MaxDegreeOfParallelism = 10 },
+            (iData) =>
+            {
+                var (inputData, expected) = labeledTestData[iData];
+                var output = Predict(inputData);
+
+                if (TensorPrimitives.IndexOfMax(output) == TensorPrimitives.IndexOfMax(expected))
+                {
+                    Interlocked.Increment(ref correctPredictions);
+                }
+            });
+
+        return (float)Math.Round(correctPredictions / (double)labeledTestData.Length, 2);
+    }
+
 
     protected void IterateNetwork(
         Action<int, int, float> biasAction,
@@ -53,7 +114,7 @@ public abstract class NeuralNetworkBase
         return (new Random(seed.Value), seed.Value);
     }
 
-    protected static float[][] InitBiases(int[] layers, Random random)
+    protected static float[][] InitBiases(int[] layers, Random random, IBiasInitializer biasInitializer)
     {
         var allBiases = new float[layers.Length][];
         allBiases[0] = [];
@@ -64,7 +125,7 @@ public abstract class NeuralNetworkBase
 
             for (var iNeuron = 0; iNeuron < layers[iLayer]; iNeuron++)
             {
-                layerBiases[iNeuron] = Initialize(random);
+                layerBiases[iNeuron] = biasInitializer.Initialize(random);
             }
 
             allBiases[iLayer] = layerBiases;
@@ -73,7 +134,7 @@ public abstract class NeuralNetworkBase
         return allBiases;
     }
 
-    protected static float[][][] InitWeights(int[] layers, Random random)
+    protected static float[][][] InitWeights(int[] layers, Random random, IWeightInitializer weightInitializer)
     {
         var allWeights = new float[layers.Length][][];
         allWeights[0] = [];
@@ -81,15 +142,15 @@ public abstract class NeuralNetworkBase
         for (var iLayer = 1; iLayer < layers.Length; iLayer++)
         {
             var layerWeights = new float[layers[iLayer]][];
-            var previousNeurons = layers[iLayer - 1];
+            var inputNeurons = layers[iLayer - 1];
 
             for (var iNeuron = 0; iNeuron < layers[iLayer]; iNeuron++)
             {
-                var neuronWeights = new float[previousNeurons];
+                var neuronWeights = new float[inputNeurons];
 
-                for (var iWeight = 0; iWeight < previousNeurons; iWeight++)
+                for (var iWeight = 0; iWeight < inputNeurons; iWeight++)
                 {
-                    neuronWeights[iWeight] = Initialize(random, respectiveTo: previousNeurons);
+                    neuronWeights[iWeight] = weightInitializer.Initialize(random, inputNeurons);
                 }
 
                 layerWeights[iNeuron] = neuronWeights;
@@ -102,7 +163,7 @@ public abstract class NeuralNetworkBase
     }
 
     private static float Initialize(Random random, int? respectiveTo = null)
-    {
+    {        
         var value = random.GetRandomGaussianVariable(0, 1);
         return respectiveTo.HasValue
             ? value / (float)Math.Sqrt(respectiveTo.Value)
